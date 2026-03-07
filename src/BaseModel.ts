@@ -3,13 +3,13 @@ import { toSnakeCase } from './utils';
 
 export abstract class BaseModel {
 
-  // ─── Metadata (static, como en tu versión MySQL) ────────────────────────
+  // ─── Metadata (static) ──────────────────────────────────────────────────
 
   static tableName: string = '';
   static idName: string = 'id';
   static relationships: Record<string, Relationship> = {};
 
-  // ─── Datos de relaciones cargadas ───────────────────────────────────────
+  // ─── Loaded relationship data ───────────────────────────────────────────
 
   protected _relatedData: Record<string, any> = {};
   protected _loadedRelations: Set<string> = new Set();
@@ -19,7 +19,7 @@ export abstract class BaseModel {
     this._loadedRelations = new Set();
   }
 
-  // ─── Accessors base ─────────────────────────────────────────────────────
+  // ─── Base accessors ─────────────────────────────────────────────────────
 
   getTableName(): string {
     return (this.constructor as typeof BaseModel).tableName;
@@ -37,11 +37,11 @@ export abstract class BaseModel {
     (this as any)[(this.constructor as typeof BaseModel).idName] = id;
   }
 
-  // ─── toRecord (ya lo tenías en chilos-orm) ──────────────────────────────
+  // ─── toRecord ──────────────────────────────────────────────────────────
 
   /**
-   * Retorna las propiedades del modelo como pares clave-valor,
-   * excluyendo campos internos.
+   * Returns the model properties as key-value pairs,
+   * excluding internal fields.
    */
   toRecord(): Record<string, unknown> {
     const record: Record<string, unknown> = {};
@@ -52,12 +52,9 @@ export abstract class BaseModel {
     return record;
   }
 
-  // ─── Definición de relaciones (static helpers) ──────────────────────────
+  // ─── Relationship definition (static helpers) ──────────────────────────
   //
-  // Estos son los mismos que tienes en tu BaseModel de MySQL,
-  // adaptados para usar lazy references.
-  //
-  // Uso en el modelo:
+  // Usage in a model:
   //   static relationships = {
   //     sessions: PackageTypeModel.hasMany(() => PackageSessionTypeModel, {
   //       foreignKey: 'package_type_id'
@@ -102,9 +99,8 @@ export abstract class BaseModel {
     relatedModel: () => typeof BaseModel,
     options: RelationshipOptions = {}
   ): Relationship {
-    // Necesitamos resolver el nombre para el foreignKey default
-    // pero como es lazy, usamos el fallback del caller
-    const foreignKey = options.foreignKey || '';  // se resuelve al cargar
+    // foreignKey default is resolved at load time since the reference is lazy
+    const foreignKey = options.foreignKey || ''; 
     const ownerKey = options.ownerKey || 'id';
 
     return {
@@ -116,12 +112,11 @@ export abstract class BaseModel {
     };
   }
 
-  // ─── Carga de relaciones ────────────────────────────────────────────────
+  // ─── Relationship loading ──────────────────────────────────────────────
   //
-  // Funciona igual que en tu BaseModel de MySQL.
-  // Recibe el DataService como parámetro para evitar dependencia circular.
+  // Receives the DataService as a parameter to avoid circular dependencies.
   //
-  // Uso:
+  // Usage:
   //   const pkg = await packageService.getById(1);
   //   await pkg.data.load('sessions', dataService);
   //   const sessions = pkg.data.getRelated('sessions');
@@ -149,7 +144,7 @@ export abstract class BaseModel {
   ): Promise<void> {
     if (this._loadedRelations.has(relationName)) return;
 
-    // Resolver el modelo lazy
+    // Resolve the lazy model reference
     const RelatedModel = relation.model();
     const relatedInstance = new (RelatedModel as any)();
 
@@ -174,7 +169,7 @@ export abstract class BaseModel {
     relatedInstance: BaseModel,
     dataService: any
   ): Promise<void> {
-    // El foreignKey está en ESTE modelo (ej: this.packageTypeId)
+    // The foreignKey lives on THIS model (e.g. this.packageTypeId)
     const fkCamel = this.toCamelCase(relation.foreignKey);
     const foreignKeyValue = (this as any)[fkCamel];
 
@@ -192,7 +187,7 @@ export abstract class BaseModel {
     RelatedModel: typeof BaseModel,
     dataService: any
   ): Promise<void> {
-    // El foreignKey está en el OTRO modelo
+    // The foreignKey lives on the OTHER model
     const localKeyValue = (this as any)[relation.localKey ?? this.getIdName()];
 
     if (localKeyValue != null) {
@@ -227,23 +222,23 @@ export abstract class BaseModel {
     }
   }
 
-  // ─── Acceso a datos relacionados ────────────────────────────────────────
+  // ─── Related data access ────────────────────────────────────────────────
 
   getRelated<R = any>(relationName: string): R | null {
     return this._relatedData[relationName] ?? null;
   }
 
-  // ─── Serialización ─────────────────────────────────────────────────────
+  // ─── Serialization ─────────────────────────────────────────────────────
 
   toJSON(): Record<string, any> {
     const json: Record<string, any> = {};
 
-    // Campos propios del modelo
+    // Model's own fields
     for (const [key, value] of Object.entries(this.toRecord())) {
       json[key] = value;
     }
 
-    // Datos relacionados cargados
+    // Loaded related data
     for (const [key, related] of Object.entries(this._relatedData)) {
       if (Array.isArray(related)) {
         json[key] = related.map(item => item.toJSON ? item.toJSON() : item);
@@ -255,7 +250,7 @@ export abstract class BaseModel {
     return json;
   }
 
-  // ─── Utilidades protegidas ─────────────────────────────────────────────
+  // ─── Protected utilities ───────────────────────────────────────────────
 
   protected toCamelCase(str: string): string {
     return str.replace(/_([a-z])/g, (_, char: string) => char.toUpperCase());

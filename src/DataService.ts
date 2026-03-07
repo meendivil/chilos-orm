@@ -14,13 +14,13 @@ export class DataService<T extends BaseModel> {
     this.adapter = adapter;
   }
 
-  // ─── Ejecución de queries ────────────────────────────────────────────────
+  // ─── Query execution ─────────────────────────────────────────────────────
 
   /**
-   * Ejecuta una query parametrizada.
+   * Executes a parameterized query.
    *
-   * ANTES:  executeQuery("SELECT * FROM book WHERE id = " + id)     ← SQL injection
-   * AHORA:  executeQuery("SELECT * FROM book WHERE id = $1", [id])  ← seguro
+   * BEFORE: executeQuery("SELECT * FROM book WHERE id = " + id)     ← SQL injection
+   * NOW:    executeQuery("SELECT * FROM book WHERE id = $1", [id])  ← safe
    */
   protected async executeQuery<R = Record<string, unknown>>(
     query: string,
@@ -83,7 +83,7 @@ export class DataService<T extends BaseModel> {
     const params: unknown[] = [];
 
     for (const [key, value] of Object.entries(record)) {
-      // No incluir el ID en el SET
+      // Don't include the ID in the SET clause
       if (key === idName) continue;
       if (value === undefined) continue;
 
@@ -91,7 +91,7 @@ export class DataService<T extends BaseModel> {
       setClauses.push(`${toSnakeCase(key)} = $${params.length}`);
     }
 
-    // El ID va como último parámetro en el WHERE
+    // The ID goes as the last parameter in the WHERE clause
     params.push(record[idName]);
     const query = `UPDATE ${this.model.getTableName()} SET ${setClauses.join(', ')} WHERE ${toSnakeCase(idName)} = $${params.length}`;
     await this.executeQuery(query, params);
@@ -120,7 +120,7 @@ export class DataService<T extends BaseModel> {
     return { success: true, message: 'Successfully deleted' };
   }
 
-  // ─── FIND BY CRITERIA (tu formato original, pero seguro) ────────────────
+  // ─── FIND BY CRITERIA (legacy format, parameterized) ────────────────────
 
   public async findByCriteria(criteria: FilterCriteria): Promise<ServiceResult<T[]>> {
     const params: unknown[] = [];
@@ -140,14 +140,14 @@ export class DataService<T extends BaseModel> {
   }
 
   /**
-   * Convierte un OperatorGroup en cláusulas SQL parametrizadas.
+   * Converts an OperatorGroup into parameterized SQL clauses.
    *
-   * ANTES (tu joinFilter):
-   *   query = query + `${el} = '${values[k][el]}'`    ← concatenaba el valor directo
+   * BEFORE (joinFilter):
+   *   query = query + `${el} = '${values[k][el]}'`    ← concatenated value directly
    *
-   * AHORA:
+   * NOW:
    *   query = query + `${el} = $3`                     ← placeholder
-   *   params.push(values[k][el])                       ← valor va separado
+   *   params.push(values[k][el])                       ← value goes separately
    */
   private buildFilterGroup(
     logic: 'AND' | 'OR',
@@ -176,13 +176,13 @@ export class DataService<T extends BaseModel> {
     return currentQuery;
   }
 
-  // ─── UTILIDAD (expuesta para subclases como BookService) ─────────────────
+  // ─── Utility (exposed for subclasses like BookService) ───────────────────
 
   protected toSnakeCase(str: string): string {
     return toSnakeCase(str);
   }
 
-  // ─── FIND CON QUERY BUILDER (nueva API fluida) ─────────────────────────
+  // ─── FIND with Query Builder (fluent API) ──────────────────────────────
 
   public async findWhere(
     buildFn: (qb: QueryBuilder) => QueryBuilder
@@ -204,8 +204,12 @@ export class DataService<T extends BaseModel> {
     return { success: true, data: result.rows[0] };
   }
 
-  // ─── Métodos para carga de relaciones ──────────────────────────────────
+  // ─── Relationship loading helpers ──────────────────────────────────────
 
+  /**
+   * Finds a record by ID from another model's table.
+   * Used by belongsTo.
+   */
   public async getByIdFrom(
     targetModel: BaseModel,
     id: number | string
@@ -223,6 +227,10 @@ export class DataService<T extends BaseModel> {
     return { success: true, data: undefined };
   }
 
+  /**
+   * Finds multiple records where foreignKey = value.
+   * Used by hasMany.
+   */
   public async findWhereFrom(
     targetModel: BaseModel,
     foreignKey: string,
@@ -236,6 +244,10 @@ export class DataService<T extends BaseModel> {
     return { success: true, data: models };
   }
 
+  /**
+   * Finds a single record where foreignKey = value.
+   * Used by hasOne.
+   */
   public async findOneWhereFrom(
     targetModel: BaseModel,
     foreignKey: string,
@@ -252,6 +264,9 @@ export class DataService<T extends BaseModel> {
     return { success: true, data: undefined };
   }
 
+  /**
+   * Converts a DB row (snake_case) into a model instance (camelCase).
+   */
   private rowToModel(targetModel: BaseModel, row: Record<string, unknown>): BaseModel {
     const ModelClass = targetModel.constructor as any;
     const instance = new ModelClass();

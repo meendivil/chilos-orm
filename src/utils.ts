@@ -1,5 +1,5 @@
 /**
- * Convierte camelCase a snake_case.
+ * Converts camelCase to snake_case.
  * bookId → book_id
  * softDelete → soft_delete
  */
@@ -7,11 +7,11 @@ export function toSnakeCase(str: string): string {
   return str
     .replace(/([A-Z])/g, '_$1')
     .toLowerCase()
-    .replace(/^_/, '');  // evitar _book_id si empieza con mayúscula
+    .replace(/^_/, '');  // avoid _book_id if string starts with uppercase
 }
 
 /**
- * Convierte snake_case a camelCase.
+ * Converts snake_case to camelCase.
  * package_type_id → packageTypeId
  * soft_delete → softDelete
  */

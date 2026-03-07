@@ -1,4 +1,4 @@
-import { BaseModel } from '../src';  // o 'mi-orm' cuando publiques
+import { BaseModel } from '../src';
 
 export class BookModel extends BaseModel {
 

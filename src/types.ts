@@ -1,11 +1,11 @@
-// ─── Resultado de una query a la DB ──────────────────────────────────────────
+// ─── Database query result ────────────────────────────────────────────────────
 
 export interface QueryResult<T = Record<string, unknown>> {
   rows: T[];
   rowCount: number;
 }
 
-// ─── Resultado que retornan los métodos del servicio ─────────────────────────
+// ─── Service method return type ──────────────────────────────────────────────
 
 export interface ServiceResult<T = unknown> {
   success: boolean;
@@ -14,7 +14,7 @@ export interface ServiceResult<T = unknown> {
   error?: OrmError;
 }
 
-// ─── Errores tipados ─────────────────────────────────────────────────────────
+// ─── Typed errors ────────────────────────────────────────────────────────────
 
 export class OrmError extends Error {
   public readonly code: string;
@@ -42,11 +42,11 @@ export class QueryError extends OrmError {
   }
 }
 
-// ─── Tipos para el Query Builder (los vas a usar en Paso 7) ─────────────────
+// ─── Query Builder types ─────────────────────────────────────────────────────
 
 export type ComparisonOperator = 'eq' | 'neq' | 'gt' | 'gte' | 'lt' | 'lte' | 'like' | 'ilike';
 
-// ─── Tu formato de criteria actual (compatibilidad) ─────────────────────────
+// ─── Legacy criteria format (backwards compatibility) ────────────────────────
 
 export interface OperatorGroup {
   eq?: Record<string, unknown>;
@@ -58,13 +58,13 @@ export interface FilterCriteria {
   or?: OperatorGroup;
 }
 
-// ─── Relaciones ──────────────────────────────────────────────────────────────
+// ─── Relationships ───────────────────────────────────────────────────────────
 
 export type RelationType = 'hasMany' | 'hasOne' | 'belongsTo';
 
 export interface Relationship {
   type: RelationType;
-  model: () => typeof import('./BaseModel').BaseModel;  // función para evitar circular deps
+  model: () => typeof import('./BaseModel').BaseModel;  // lazy function to avoid circular deps
   foreignKey: string;
   localKey?: string;
   ownerKey?: string;

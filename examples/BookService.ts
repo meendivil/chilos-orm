@@ -8,8 +8,6 @@ export class BookService extends DataService<BookModel> {
   }
 
   public async findByName(name: string) {
-    // ANTES: `SELECT * FROM book WHERE name = '${name}'`  ← SQL injection
-    // AHORA: parametrizado
     return this.findOneWhere(qb =>
       qb.where('name', 'eq', name)
     );

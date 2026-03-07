@@ -3,7 +3,7 @@ import { BookModel } from './BookModel';
 import { BookService } from './BookService';
 
 async function main() {
-  // 1. Crear adapter y conectar
+  // 1. Create adapter and connect
   const adapter = new PostgresAdapter({
     host: process.env.DB_HOST ?? 'localhost',
     port: 5432,
@@ -13,10 +13,10 @@ async function main() {
   });
   await adapter.connect();
 
-  // 2. Crear servicio
+  // 2. Create service
   const bookService = new BookService(adapter);
 
-  // 3. CRUD
+  // 3. CRUD operations
   const book = new BookModel(1, "Harry Potter and the Sorcerer's Stone", "Harry Potter", 6.28, "0439708184", 1, false);
   await bookService.save(book);
   await bookService.update(book);
@@ -25,7 +25,7 @@ async function main() {
   await bookService.softDelete(book);
   await bookService.softDeleteById(1);
 
-  // 4. Tu criteria original — sigue funcionando
+  // 4. Legacy criteria format — still works
   const byCriteria = await bookService.findByCriteria({
     and: {
       eq: { isbn: "0439708184" },
@@ -37,7 +37,7 @@ async function main() {
   });
   console.log('By criteria:', byCriteria);
 
-  // 5. Nuevo query builder
+  // 5. New fluent query builder
   const byBuilder = await bookService.findWhere(qb =>
     qb.where('isbn', 'eq', '0439708184')
       .andWhere('description', 'like', '%Harry Potter%')
@@ -47,11 +47,11 @@ async function main() {
   );
   console.log('By builder:', byBuilder);
 
-  // 6. Métodos custom del BookService
+  // 6. Custom BookService methods
   await bookService.findByName("Harry");
   await bookService.search("Potter");
 
-  // 7. Desconectar
+  // 7. Disconnect
   await adapter.disconnect();
 }
 

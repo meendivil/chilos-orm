@@ -11,7 +11,7 @@ export class PostgresAdapter implements DatabaseAdapter {
 
   async connect(): Promise<void> {
     try {
-      // import dinámico — si el usuario no tiene pg instalado, falla aquí con mensaje claro
+      // Dynamic import — if the user doesn't have pg installed, it fails here with a clear message
       const { Pool } = await import('pg');
       this.pool = new Pool({
         host: this.config.host,
@@ -24,12 +24,12 @@ export class PostgresAdapter implements DatabaseAdapter {
         idleTimeoutMillis: this.config.pool?.idleTimeoutMs ?? 30000,
       });
 
-      // Verificar que la conexión funciona
+      // Verify the connection works
       const client = await this.pool.connect();
       client.release();
     } catch (err) {
       throw new ConnectionError(
-        `No se pudo conectar a PostgreSQL en ${this.config.host}:${this.config.port}`,
+        `Failed to connect to PostgreSQL at ${this.config.host}:${this.config.port}`,
         err instanceof Error ? err : new Error(String(err))
       );
     }
@@ -46,7 +46,7 @@ export class PostgresAdapter implements DatabaseAdapter {
     params: unknown[] = []
   ): Promise<QueryResult<T>> {
     if (!this.pool) {
-      throw new ConnectionError('No hay conexión activa. Llama connect() primero.');
+      throw new ConnectionError('No active connection. Call connect() first.');
     }
 
     try {
@@ -57,7 +57,7 @@ export class PostgresAdapter implements DatabaseAdapter {
       };
     } catch (err) {
       throw new QueryError(
-        `Query falló: ${sql}`,
+        `Query failed: ${sql}`,
         err instanceof Error ? err : new Error(String(err))
       );
     }
