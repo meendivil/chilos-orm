@@ -12,20 +12,37 @@
   "scripts": {
     "build": "tsc",
     "dev": "tsc --watch",
+    "demo": "ts-node examples/demo.ts",
+    "demo:sqlite": "ts-node examples/demo-sqlite.ts",
+    "demo:mysql": "ts-node examples/demo-mysql.ts",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
     "orm",
     "typescript",
     "postgresql",
+    "mysql",
+    "sqlite",
     "query-builder"
   ],
   "license": "MIT",
-  "peerDependencies": {
+  "dependencies": {
     "pg": "^8.0.0"
   },
-  "peerDependenciesMeta": {},
+  "peerDependencies": {
+    "mysql2": "^3.0.0",
+    "better-sqlite3": "^11.0.0"
+  },
+  "peerDependenciesMeta": {
+    "mysql2": {
+      "optional": true
+    },
+    "better-sqlite3": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0",
     "@types/node": "^20.11.0",
     "@types/pg": "^8.10.0",
     "ts-node": "^10.9.2",
