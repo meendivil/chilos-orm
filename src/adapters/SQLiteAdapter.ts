@@ -74,6 +74,13 @@ export class SQLiteAdapter implements DatabaseAdapter {
     }
   }
 
+  private convertParams(params: unknown[]): unknown[] {
+    return params.map(p => {
+      if (typeof p === 'boolean') return p ? 1 : 0;
+      return p;
+    });
+  }
+
   async query<T = Record<string, unknown>>(
     sql: string,
     params: unknown[] = []
@@ -94,14 +101,16 @@ export class SQLiteAdapter implements DatabaseAdapter {
 
       const isSelect = finalSql.trim().toUpperCase().startsWith('SELECT');
 
+      const safeParams = this.convertParams(params);
+
       if (isSelect) {
-        const rows = this.db.prepare(finalSql).all(...params);
+        const rows = this.db.prepare(finalSql).all(...safeParams);
         return {
           rows: rows as T[],
           rowCount: rows.length,
         };
       } else {
-        const result = this.db.prepare(finalSql).run(...params);
+        const result = this.db.prepare(finalSql).run(...safeParams);
         return {
           rows: [] as T[],
           rowCount: result.changes ?? 0,

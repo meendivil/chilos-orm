@@ -54,6 +54,8 @@ export class MySQLAdapter implements DatabaseAdapter {
       // Convert PostgreSQL-style $1, $2, $3 placeholders to MySQL-style ?
       const mysqlSql = this.convertPlaceholders(sql);
 
+      const noIlike = this.convertIlike(mysqlSql);  
+
       // Remove RETURNING * clause (not supported in MySQL)
       const cleanSql = mysqlSql.replace(/\s+RETURNING\s+\*/i, '');
 
@@ -79,6 +81,10 @@ export class MySQLAdapter implements DatabaseAdapter {
         err instanceof Error ? err : new Error(String(err))
       );
     }
+  }
+
+  private convertIlike(sql: string): string {
+    return sql.replace(/\bILIKE\b/gi, 'LIKE');
   }
 
   /**

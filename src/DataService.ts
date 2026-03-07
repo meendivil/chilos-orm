@@ -107,16 +107,16 @@ export class DataService<T extends BaseModel> {
     const record = model.toRecord();
     const idCol = toSnakeCase(idName);
 
-    const query = `UPDATE ${this.model.getTableName()} SET soft_delete = true WHERE ${idCol} = $1`;
-    await this.executeQuery(query, [record[idName]]);
+    const query = `UPDATE ${this.model.getTableName()} SET soft_delete = $1 WHERE ${idCol} = $2`;
+    await this.executeQuery(query, [true, record[idName]]);
 
     return { success: true, message: 'Successfully deleted' };
   }
 
   public async softDeleteById(id: number | string): Promise<ServiceResult> {
     const idCol = toSnakeCase(this.model.getIdName());
-    const query = `UPDATE ${this.model.getTableName()} SET soft_delete = true WHERE ${idCol} = $1`;
-    await this.executeQuery(query, [id]);
+    const query = `UPDATE ${this.model.getTableName()} SET soft_delete = $1 WHERE ${idCol} = $2`;
+    await this.executeQuery(query, [true, id]);
 
     return { success: true, message: 'Successfully deleted' };
   }
