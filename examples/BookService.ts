@@ -19,18 +19,26 @@ export class BookService extends DataService<BookModel> {
     );
   }
 
+  public async findByAuthor(authorId: number) {
+    return this.findWhere(qb =>
+      qb.where('authorId', 'eq', authorId)
+        .andWhere('softDelete', 'eq', false)
+        .orderBy('name')
+    );
+  }
+
+  public async findByPublisher(publisherId: number) {
+    return this.findWhere(qb =>
+      qb.where('publisherId', 'eq', publisherId)
+        .andWhere('softDelete', 'eq', false)
+    );
+  }
+
   public async search(term: string) {
     return this.findWhere(qb =>
       qb.where('name', 'ilike', `%${term}%`)
         .orWhere('description', 'ilike', `%${term}%`)
     );
   }
-
-  public async findInStock() {
-    return this.findWhere(qb =>
-      qb.where('stock', 'gt', 0)
-        .andWhere('softDelete', 'eq', false)
-        .orderBy('name')
-    );
-  }
+  
 }

@@ -36,21 +36,22 @@ export class DataService<T extends BaseModel> {
     const idCol = toSnakeCase(this.model.getIdName());
 
     const query = `SELECT * FROM ${table} WHERE ${idCol} = $1`;
-    const result = await this.executeQuery<T>(query, [id]);
+    const result = await this.executeQuery(query, [id]);
 
+    const row = result.rows[0];
     return {
       success: true,
-      data: result.rows[0],
+      data: row ? this.hydrateRow(row as Record<string, unknown>) : undefined,
     };
   }
 
   public async getAll(): Promise<ServiceResult<T[]>> {
     const query = `SELECT * FROM ${this.model.getTableName()}`;
-    const result = await this.executeQuery<T>(query);
+    const result = await this.executeQuery(query);
 
     return {
       success: true,
-      data: result.rows,
+      data: result.rows.map(row => this.hydrateRow(row as Record<string, unknown>)),
     };
   }
 
@@ -189,9 +190,12 @@ export class DataService<T extends BaseModel> {
   ): Promise<ServiceResult<T[]>> {
     const qb = new QueryBuilder(this.model.getTableName());
     const built = buildFn(qb).buildSelect();
-    const result = await this.executeQuery<T>(built.sql, built.params);
+    const result = await this.executeQuery(built.sql, built.params);
 
-    return { success: true, data: result.rows };
+    return {
+      success: true,
+      data: result.rows.map(row => this.hydrateRow(row as Record<string, unknown>)),
+    };
   }
 
   public async findOneWhere(
@@ -199,9 +203,13 @@ export class DataService<T extends BaseModel> {
   ): Promise<ServiceResult<T>> {
     const qb = new QueryBuilder(this.model.getTableName());
     const built = buildFn(qb).limit(1).buildSelect();
-    const result = await this.executeQuery<T>(built.sql, built.params);
+    const result = await this.executeQuery(built.sql, built.params);
 
-    return { success: true, data: result.rows[0] };
+    const row = result.rows[0];
+    return {
+      success: true,
+      data: row ? this.hydrateRow(row as Record<string, unknown>) : undefined,
+    };
   }
 
   // ─── Relationship loading helpers ──────────────────────────────────────
@@ -277,6 +285,21 @@ export class DataService<T extends BaseModel> {
     }
 
     return instance;
+  }
+
+  /**
+   * Converts a DB row into an instance of this service's model.
+   */
+  private hydrateRow(row: Record<string, unknown>): T {
+    const ModelClass = this.model.constructor as any;
+    const instance = new ModelClass();
+
+    for (const [key, value] of Object.entries(row)) {
+      const camelKey = this.toCamelCase(key);
+      (instance as any)[camelKey] = value;
+    }
+
+    return instance as T;
   }
 
   private toCamelCase(str: string): string {

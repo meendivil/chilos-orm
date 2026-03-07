@@ -14,19 +14,23 @@
     "dev": "tsc --watch",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["orm", "typescript", "postgresql", "query-builder"],
+  "keywords": [
+    "orm",
+    "typescript",
+    "postgresql",
+    "query-builder"
+  ],
   "license": "MIT",
   "peerDependencies": {
     "pg": "^8.0.0"
   },
-  "peerDependenciesMeta": {
-    "pg": {
-      "optional": true
-    }
-  },
+  "peerDependenciesMeta": {},
   "devDependencies": {
     "@types/node": "^20.11.0",
     "@types/pg": "^8.10.0",
-    "typescript": "^5.3.0"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0",
+    "pg": "^8.0.0"
   }
 }
+
